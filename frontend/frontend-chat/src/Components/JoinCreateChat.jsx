@@ -136,8 +136,8 @@ const JoinCreateChat = () => {
 
         {!isLoggedIn && (
           <div className="flex justify-center gap-4">
-            <button onClick={() => setIsLogin(true)} className={`px-4 py-2 rounded-full ${isLogin ? '''bg-blue-500 text-white''' : '''bg-gray-300'''}`}>Login</button>
-            <button onClick={() => setIsLogin(false)} className={`px-4 py-2 rounded-full ${!isLogin ? '''bg-blue-500 text-white''' : '''bg-gray-300'''}`}>Sign Up</button>
+            <button onClick={() => setIsLogin(true)} className={`px-4 py-2 rounded-full ${isLogin ? 'bg-blue-500 text-white' : 'bg-gray-300'}`}>Login</button>
+            <button onClick={() => setIsLogin(false)} className={`px-4 py-2 rounded-full ${!isLogin ? 'bg-blue-500 text-white' : 'bg-gray-300'}`}>Sign Up</button>
           </div>
         )}
 
