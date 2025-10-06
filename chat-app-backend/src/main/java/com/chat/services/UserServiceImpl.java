@@ -5,6 +5,8 @@ import com.chat.repositories.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class UserServiceImpl implements UserService {
 
@@ -32,5 +34,10 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("Invalid username or password");
         }
         return user;
+    }
+
+    @Override
+    public List<User> searchUsers(String query) {
+        return userRepository.findByUsernameContainingIgnoreCase(query);
     }
 }

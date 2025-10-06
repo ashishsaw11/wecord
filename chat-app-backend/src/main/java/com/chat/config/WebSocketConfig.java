@@ -13,21 +13,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-
-        config.enableSimpleBroker("/topic");
-        // /topic/messages
-
+        config.enableSimpleBroker("/topic", "/user");
         config.setApplicationDestinationPrefixes("/app");
-        // /app/chat
-        // server-side: @MessagingMapping("/chat)
-
-
+        config.setUserDestinationPrefix("/user");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/chat")//connection establishment
-                .setAllowedOrigins(AppConstants.FRONT_END_BASE_URL)
+                .setAllowedOriginPatterns("*")
                 .withSockJS();
     }
     // /chat endpoint par connection apka establish hoga

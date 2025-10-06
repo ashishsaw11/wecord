@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { MdAttachFile, MdSend } from "react-icons/md";
-import { FaMicrophone } from "react-icons/fa";
+import { FaMicrophone, FaUserSearch } from "react-icons/fa";
 import useChatContext from "../context/ChatContext";
 import { useNavigate } from "react-router";
 import SockJS from "sockjs-client";
@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import { baseURL } from "../Config/AxiosHelper.js";
 import { getMessages } from "../Services/RoomService.jsx";
 import { timeAgo } from "../Config/helper.js";
+import UserSearch from "./UserSearch.jsx";
 
 const ChatPage = () => {
   const {
@@ -21,13 +22,13 @@ const ChatPage = () => {
   } = useChatContext();
 
   const navigate = useNavigate();
-  
+
   // Check connection and persist on page refresh
   useEffect(() => {
     // Try to restore session from localStorage if available
     const savedRoomId = localStorage.getItem('chatRoomId');
     const savedUser = localStorage.getItem('chatUsername');
-    
+
     if (!connected && savedRoomId && savedUser) {
       // Restore session
       setRoomId(savedRoomId);
@@ -39,6 +40,7 @@ const ChatPage = () => {
   }, [connected, roomId, currentUser, navigate, setConnected, setRoomId, setCurrentUser]);
 
   const [messages, setMessages] = useState([]);
+  const [privateMessages, setPrivateMessages] = useState(new Map());
   const [input, setInput] = useState("");
   const inputRef = useRef(null);
   const chatBoxRef = useRef(null);
@@ -47,6 +49,8 @@ const ChatPage = () => {
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
+  const [showUserSearch, setShowUserSearch] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   // Load messages and persist login state
   useEffect(() => {
@@ -54,7 +58,7 @@ const ChatPage = () => {
       try {
         const messages = await getMessages(roomId);
         setMessages(messages);
-        
+
         // Save session to localStorage on successful connection
         if (roomId && currentUser) {
           localStorage.setItem('chatRoomId', roomId);
@@ -77,28 +81,42 @@ const ChatPage = () => {
     }
   }, [messages]);
 
+  const onPrivateMessageReceived = (message) => {
+    const fromUser = message.sender === currentUser ? message.receiver : message.sender;
+
+    setPrivateMessages(prevMessages => {
+        const newMessages = new Map(prevMessages);
+        const userMessages = newMessages.get(fromUser) || [];
+        newMessages.set(fromUser, [...userMessages, message]);
+        return newMessages;
+    });
+
+    if (selectedUser?.username !== fromUser) {
+        toast(`New private message from ${message.sender}`);
+    }
+  };
+
   //stompClient ko init karne honge
   //subscribe
   useEffect(() => {
     const connectWebSocket = () => {
-      ///SockJS
       const sock = new SockJS(`${baseURL}/chat`);
       const client = Stomp.over(sock);
 
       client.connect({}, () => {
         setStompClient(client);
-
         toast.success("connected");
 
         client.subscribe(`/topic/room/${roomId}`, (message) => {
-          console.log(message);
-
           const newMessage = JSON.parse(message.body);
-
           setMessages((prev) => [...prev, newMessage]);
-
-          //rest of the work after success receiving the message
         });
+
+        if (currentUser) {
+            client.subscribe(`/user/${currentUser}/private`, (message) => {
+                onPrivateMessageReceived(JSON.parse(message.body));
+            });
+        }
       });
     };
 
@@ -106,14 +124,16 @@ const ChatPage = () => {
       connectWebSocket();
     }
 
-    //stomp client
-  }, [roomId, connected]);
+    return () => {
+        if (stompClient) {
+            stompClient.disconnect();
+        }
+    }
+  }, [roomId, connected, currentUser]);
 
   //send message handle
   const sendMessage = async () => {
     if (stompClient && connected && input.trim()) {
-      console.log(input);
-
       const message = {
         sender: currentUser,
         content: input,
@@ -129,8 +149,6 @@ const ChatPage = () => {
       );
       setInput("");
     }
-
-    //
   };
 
   const uploadFile = async (file) => {
@@ -217,16 +235,20 @@ const ChatPage = () => {
     setConnected(false);
     setRoomId("");
     setCurrentUser("");
-    
-    // Clear localStorage on logout
+
     localStorage.removeItem('chatRoomId');
     localStorage.removeItem('chatUsername');
-    
+
     navigate("/");
   }
 
+  const handleSelectUser = (user) => {
+      setSelectedUser(user);
+      setShowUserSearch(false);
+  }
+
   return (
-    <div className="">
+    <div className="relative h-screen">
       {/* Header - Enhanced Responsive */}
       <header className="fixed w-full top-0 left-0 right-0 py-3 sm:py-4 md:py-5 shadow-lg bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700 text-white z-50">
         <div className="container mx-auto px-4 flex flex-col sm:flex-row justify-between sm:justify-around items-center space-y-2 sm:space-y-0">
@@ -242,8 +264,18 @@ const ChatPage = () => {
               User : <span className="font-bold text-yellow-300">{currentUser}</span>
             </h1>
           </div>
-          {/* Button: leave room */}
-          <div>
+          {/* Buttons */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            <button
+              onClick={() => {
+                  setShowUserSearch(!showUserSearch);
+                  setSelectedUser(null);
+              }}
+              title="Search Users"
+              className="bg-blue-500 hover:bg-blue-600 p-2 sm:p-3 rounded-full text-white font-semibold shadow-lg transition-all duration-200 text-sm sm:text-base"
+            >
+              <FaUserSearch size={16} />
+            </button>
             <button
               onClick={handleLogout}
               className="bg-red-500 hover:bg-red-600 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-white font-semibold shadow-lg transition-all duration-200 text-sm sm:text-base"
@@ -254,6 +286,25 @@ const ChatPage = () => {
         </div>
       </header>
 
+      {/* Overlay for User Search and Private Chat */}
+      {(showUserSearch || selectedUser) && (
+          <div className="absolute inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-11/12 max-w-md h-3/4">
+                  <UserSearch
+                      onSelectUser={handleSelectUser}
+                      stompClient={stompClient}
+                      privateMessages={privateMessages.get(selectedUser?.username) || []}
+                      selectedUser={selectedUser}
+                      onClose={() => {
+                          setShowUserSearch(false);
+                          setSelectedUser(null);
+                      }}
+                  />
+              </div>
+          </div>
+      )}
+
+
       {/* Chat Messages - Enhanced Responsive */}
       <main
         ref={chatBoxRef}
@@ -261,7 +312,6 @@ const ChatPage = () => {
       >
         <div className="space-y-3 sm:space-y-4">
           {messages.map((message, index) => {
-            // Assign unique color based on sender
             const userColors = [
               "bg-blue-500 text-white",
               "bg-green-500 text-white",
@@ -296,16 +346,16 @@ const ChatPage = () => {
                       <p className="text-xs sm:text-sm font-bold truncate">{message.sender}</p>
                       <div className="text-sm sm:text-base">
                         {message.messageType === "IMAGE" ? (
-                          <img 
-                            src={`${baseURL}${message.content}`} 
-                            alt="attachment" 
-                            className="max-w-32 sm:max-w-40 md:max-w-48 rounded-lg cursor-pointer hover:opacity-90 transition-opacity" 
+                          <img
+                            src={`${baseURL}${message.content}`}
+                            alt="attachment"
+                            className="max-w-32 sm:max-w-40 md:max-w-48 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                             onClick={() => window.open(`${baseURL}${message.content}`, '_blank')}
                           />
                         ) : message.messageType === "AUDIO" ? (
-                          <audio 
-                            controls 
-                            src={`${baseURL}${message.content}`} 
+                          <audio
+                            controls
+                            src={`${baseURL}${message.content}`}
                             className="w-32 sm:w-40 md:w-48"
                           />
                         ) : (
