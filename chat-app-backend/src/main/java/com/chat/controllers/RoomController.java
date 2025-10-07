@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.chat.config.AppConstants;
 import com.chat.entities.Message;
+import com.chat.payload.RoomResponse;
 // Remove or comment out this line if present:
 // import org.apache.logging.log4j.message.Message;
 // ...existing code...
@@ -42,9 +43,9 @@ public class RoomController {
 
     //create room
     @PostMapping
-    public ResponseEntity<?> createRoom(@RequestBody String roomId) {
+    public ResponseEntity<?> createRoom(@RequestBody com.chat.payload.RoomRequest roomRequest) {
 
-        if (roomRepository.findByRoomId(roomId) != null) {
+        if (roomRepository.findByRoomId(roomRequest.getRoomId()) != null) {
             //room is already there
             return ResponseEntity.badRequest().body("Room already exists!");
 
@@ -53,9 +54,9 @@ public class RoomController {
 
         //create new room
         Room room = new Room();
-        room.setRoomId(roomId);
+        room.setRoomId(roomRequest.getRoomId());
         Room savedRoom = roomRepository.save(room);
-        return ResponseEntity.status(HttpStatus.CREATED).body(room);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new RoomResponse(savedRoom.getRoomId()));
 
 
     }
