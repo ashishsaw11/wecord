@@ -16,7 +16,7 @@ export const decryptMessage = (encryptedMessage, secretKey) => {
         const bytes = CryptoJS.AES.decrypt(encryptedMessage, secretKey);
         const decrypted = bytes.toString(CryptoJS.enc.Utf8);
         return decrypted || encryptedMessage; // Return original if decryption fails
-    } catch (error) {
+    } catch {
         return encryptedMessage; // Return original on error
     }
 };
