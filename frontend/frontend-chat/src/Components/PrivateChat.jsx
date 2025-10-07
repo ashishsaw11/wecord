@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { sendPrivateMessage } from '../Services/PrivateMessageService';
-import useChatContext from '../context/ChatContext';
+import { useChatContext } from '../context/useChatContext';
 import { generateSharedSecret, encryptMessage, decryptMessage } from '../Services/EncryptionService';
 
 const PrivateChat = ({ receiver, stompClient, messages, onClose }) => {
