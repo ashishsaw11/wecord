@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { MdAttachFile, MdSend } from "react-icons/md";
-import { FaMicrophone, FaUserSearch } from "react-icons/fa";
-import useChatContext from "../context/ChatContext";
+import { FaMicrophone } from "react-icons/fa";
+import { BsPersonPlus } from "react-icons/bs";
+import { useChatContext } from "../context/useChatContext.js";
 import { useNavigate } from "react-router";
 import SockJS from "sockjs-client";
 import { Stomp } from "@stomp/stompjs";
@@ -42,7 +43,6 @@ const ChatPage = () => {
   const [messages, setMessages] = useState([]);
   const [privateMessages, setPrivateMessages] = useState(new Map());
   const [input, setInput] = useState("");
-  const inputRef = useRef(null);
   const chatBoxRef = useRef(null);
   const fileInputRef = useRef(null);
   const [stompClient, setStompClient] = useState(null);
@@ -64,7 +64,9 @@ const ChatPage = () => {
           localStorage.setItem('chatRoomId', roomId);
           localStorage.setItem('chatUsername', currentUser);
         }
-      } catch (error) {}
+      } catch {
+        toast.error("Failed to load messages.");
+      }
     }
     if (connected && roomId && currentUser) {
       loadMessages();
@@ -81,7 +83,7 @@ const ChatPage = () => {
     }
   }, [messages]);
 
-  const onPrivateMessageReceived = (message) => {
+  const onPrivateMessageReceived = useCallback((message) => {
     const fromUser = message.sender === currentUser ? message.receiver : message.sender;
 
     setPrivateMessages(prevMessages => {
@@ -94,7 +96,7 @@ const ChatPage = () => {
     if (selectedUser?.username !== fromUser) {
         toast(`New private message from ${message.sender}`);
     }
-  };
+  }, [currentUser, selectedUser]);
 
   //stompClient ko init karne honge
   //subscribe
@@ -129,7 +131,7 @@ const ChatPage = () => {
             stompClient.disconnect();
         }
     }
-  }, [roomId, connected, currentUser]);
+  }, [roomId, connected, currentUser, onPrivateMessageReceived, stompClient]);
 
   //send message handle
   const sendMessage = async () => {
@@ -274,7 +276,7 @@ const ChatPage = () => {
               title="Search Users"
               className="bg-blue-500 hover:bg-blue-600 p-2 sm:p-3 rounded-full text-white font-semibold shadow-lg transition-all duration-200 text-sm sm:text-base"
             >
-              <FaUserSearch size={16} />
+              <BsPersonPlus size={16} />
             </button>
             <button
               onClick={handleLogout}

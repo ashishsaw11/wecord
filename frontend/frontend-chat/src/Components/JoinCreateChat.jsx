@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import chatIcon from "../assets/chat.png";
 import toast from "react-hot-toast";
 import { createRoomApi, joinChatApi, loginUserApi, registerUserApi } from "../Services/RoomService.jsx";
-import useChatContext from "../context/ChatContext.jsx";
+import { useChatContext } from "../context/useChatContext.js";
 import { useNavigate } from "react-router";
 
 const JoinCreateChat = () => {
@@ -58,7 +58,11 @@ const JoinCreateChat = () => {
       setCurrentUser(detail.username);
       setIsLoggedIn(true);
     } catch (error) {
-      toast.error("Invalid username or password");
+      if (error.response && error.response.data) {
+        toast.error(error.response.data);
+      } else {
+        toast.error("Invalid username or password");
+      }
     }
   }
 

@@ -5,7 +5,7 @@ import App from "./App.jsx";
 import { BrowserRouter } from "react-router";
 import AppRoutes from "./Config/routes.jsx";
 import { Toaster } from "react-hot-toast";
-import { ChatProvider } from "./context/ChatContext";
+import { ChatProvider } from "./context/ChatProvider.jsx";
 
 // ...existing code...
 
