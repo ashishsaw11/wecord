@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import chatIcon from "../assets/chat.png";
 import toast from "react-hot-toast";
-import { createRoomApi, joinChatApi, loginUserApi, registerUserApi } from "../Services/RoomService.jsx";
+import { createRoomApi, joinChatApi } from "../Services/RoomService.jsx";
+import { loginUserApi, registerUserApi } from "../Services/UserService.js";
 import { useChatContext } from "../context/useChatContext.js";
 import { useNavigate } from "react-router";
 

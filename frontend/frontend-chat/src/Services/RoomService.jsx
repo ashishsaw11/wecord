@@ -16,13 +16,3 @@ export const getMessages = async (roomId, size = 50, page = 0) => {
   );
   return response.data;
 };
-
-export const registerUserApi = async (user) => {
-  const response = await httpClient.post("/api/v1/users/register", user);
-  return response.data;
-};
-
-export const loginUserApi = async (credentials) => {
-  const response = await httpClient.post("/api/v1/users/login", credentials);
-  return response.data;
-};
