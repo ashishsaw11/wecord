@@ -12,7 +12,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import java.time.LocalDateTime;
-    
+
 
 
 
@@ -36,7 +36,7 @@ public class ChatController {
             @RequestBody MessageRequest request
     ) {
 
-        Room room = roomRepository.findByRoomId(request.getRoomId());
+        Room room = roomRepository.findByRoomId(roomId);
         Message message = new Message();
         message.setContent(request.getContent());
         message.setSender(request.getSender());

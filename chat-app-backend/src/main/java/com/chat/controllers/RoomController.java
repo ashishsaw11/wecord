@@ -70,8 +70,7 @@ public class RoomController {
 
         Room room = roomRepository.findByRoomId(roomId);
         if (room == null) {
-            return ResponseEntity.badRequest()
-                    .body("Room not found!!");
+            return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(room);
     }
