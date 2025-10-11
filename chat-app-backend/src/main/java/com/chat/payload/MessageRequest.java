@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 public class MessageRequest {
     private String content;
     private String sender;
-    private String roomId;
     private String messageType;
     private LocalDateTime messageTime;
 

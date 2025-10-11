@@ -92,42 +92,38 @@ const JoinCreateChat = () => {
     }
   }
 
-  async function joinChat() {
+  async function joinOrCreateRoom() {
     if (detail.roomId === "") {
       toast.error("Room ID is required!");
       return;
     }
     try {
+      // First, try to join the room
       const room = await joinChatApi(detail.roomId);
       toast.success("Joined room successfully!");
       setRoomId(room.roomId);
       setConnected(true);
       navigate("/chat");
     } catch (error) {
-      if (error.response && error.response.data) {
+      if (error.response && error.response.status === 404) {
+        // If the room doesn't exist, try to create it
+        try {
+          const response = await createRoomApi(detail.roomId);
+          toast.success("Room Created Successfully !!");
+          setRoomId(response.roomId);
+          setConnected(true);
+          navigate("/chat");
+        } catch (createError) {
+          if (createError.response && createError.response.data) {
+            toast.error(createError.response.data);
+          } else {
+            toast.error("Error in creating room");
+          }
+        }
+      } else if (error.response && error.response.data) {
         toast.error(error.response.data);
       } else {
-        toast.error("Error in joining room");
-      }
-    }
-  }
-
-  async function createRoom() {
-    if (detail.roomId === "") {
-      toast.error("Room ID is required!");
-      return;
-    }
-    try {
-      const response = await createRoomApi(detail.roomId);
-      toast.success("Room Created Successfully !!");
-      setRoomId(response.roomId);
-      setConnected(true);
-      navigate("/chat");
-    } catch (error) {
-      if (error.response && error.response.data) {
-        toast.error(error.response.data);
-      } else {
-        toast.error("Error in creating room");
+        toast.error("Error in joining or creating room");
       }
     }
   }
@@ -237,16 +233,10 @@ const JoinCreateChat = () => {
             {/* Buttons */}
             <div className="flex justify-center gap-2 mt-4">
               <button
-                onClick={joinChat}
+                onClick={joinOrCreateRoom}
                 className="px-3 py-2 dark:bg-blue-500 hover:dark:bg-blue-800 rounded-full text-white transition-colors"
               >
-                Join Room
-              </button>
-              <button
-                onClick={createRoom}
-                className="px-3 py-2 dark:bg-orange-500 hover:dark:bg-orange-800 rounded-full text-white transition-colors"
-              >
-                Create Room
+                Join or Create Room
               </button>
             </div>
           </>
